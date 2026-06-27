@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Screener</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <span>🎯</span>
+            <h2>ResumeAI</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" onclick="showPage('dashboard')">
+                <span class="nav-icon">📊</span> Dashboard
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('analyze')">
+                <span class="nav-icon">📄</span> Analyze Resume
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('rank')">
+                <span class="nav-icon">🏆</span> Rank Resumes
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('voice')">
+                <span class="nav-icon">🎤</span> Voice Interview
+            </a>
+            <a href="#" class="nav-item" onclick="showPage('history')">
+                <span class="nav-icon">📋</span> History
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <p>AI-Powered Hiring Tool</p>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <!-- DASHBOARD PAGE -->
+        <div id="page-dashboard" class="page active">
+            <div class="page-header">
+                <h1>📊 Dashboard</h1>
+                <p>Welcome to ResumeAI — your AI-powered hiring assistant</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-info">
+                        <h3 id="stat-analyzed">0</h3>
+                        <p>Resumes Analyzed</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-info">
+                        <h3 id="stat-avg-score">—</h3>
+                        <p>Avg Match Score</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-info">
+                        <h3 id="stat-top-score">—</h3>
+                        <p>Top Score</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎤</div>
+                    <div class="stat-info">
+                        <h3 id="stat-interviews">0</h3>
+                        <p>Mock Interviews</p>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-cards">
+                <div class="info-card" onclick="showPage('analyze')">
+                    <h3>📄 Analyze a Resume</h3>
+                    <p>Upload a resume and job description to get an AI-powered match score, skill gap analysis, and interview questions.</p>
+                    <button class="btn-primary">Get Started →</button>
+                </div>
+                <div class="info-card" onclick="showPage('rank')">
+                    <h3>🏆 Rank Multiple Resumes</h3>
+                    <p>Upload several resumes for one job description and instantly rank candidates by match score.</p>
+                    <button class="btn-primary">Rank Candidates →</button>
+                </div>
+                <div class="info-card" onclick="showPage('voice')">
+                    <h3>🎤 Mock Voice Interview</h3>
+                    <p>Practice interviews with AI-generated questions. Listen to each question and record your spoken answer.</p>
+                    <button class="btn-primary">Start Interview →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYZE PAGE -->
+        <div id="page-analyze" class="page">
+            <div class="page-header">
+                <h1>📄 Analyze Resume</h1>
+                <p>Upload a resume or analyze a job description directly</p>
+            </div>
+
+            <!-- MODE TOGGLE -->
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="btnWithResume" onclick="switchMode('resume')">
+                    📄 With Resume
+                </button>
+                <button class="mode-btn" id="btnJDOnly" onclick="switchMode('jd')">
+                    🔍 JD Only
+                </button>
+            </div>
+
+            <!-- RESUME MODE -->
+            <div id="resumeMode">
+                <div class="card">
+                    <h2>Upload Details</h2>
+                    <form id="analyzeForm">
+                        <label>Resume (PDF)</label>
+                        <input type="file" id="resumeFile" accept=".pdf" required>
+                        <label>Job Description</label>
+                        <textarea id="jobDescription" rows="7" placeholder="Paste the job description here..." required></textarea>
+                        <button type="submit" class="btn-primary">🔍 Analyze Resume</button>
+                    </form>
+                </div>
+
+                <div id="loadingSingle" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Analyzing resume and generating insights...</p>
+                </div>
+
+                <div id="resultsSingle" class="hidden">
+                    <div class="results-grid">
+                        <div class="card score-card">
+                            <h2>Match Score</h2>
+                            <div class="score-circle" id="scoreCircle">
+                                <span id="scoreValue">0%</span>
+                            </div>
+                            <p id="scoreLabel" class="score-label"></p>
+                        </div>
+                        <div class="card">
+                            <h2>📋 Resume Summary</h2>
+                            <div class="summary-item">
+                                <span class="summary-label">Experience</span>
+                                <span id="expYears">—</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Education</span>
+                                <span id="education">—</span>
+                            </div>
+                            <p><strong>Skills Found:</strong></p>
+                            <div id="skillsList" class="tag-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>📊 Skill Confidence Bars</h2>
+                        <p style="color:#888; font-size:0.85rem; margin-bottom:1rem;">How strongly each skill appears in your resume</p>
+                        <div id="skillConfidence"></div>
+                    </div>
+
+                    <div class="card">
+                        <h2>✅ Matched Skills</h2>
+                        <div id="matchedSkills" class="tag-list"></div>
+                    </div>
+
+                    <div class="card">
+                        <h2>⚠️ Missing Skills</h2>
+                        <div id="missingSkills" class="tag-list missing"></div>
+                    </div>
+
+                    <div class="card">
+                        <h2>🙈 Bias-Free Screening</h2>
+                        <p style="color:#888; font-size:0.85rem; margin-bottom:1rem;">Detects potentially bias-causing information in your resume</p>
+                        <div class="bias-score-row">
+                            <div class="bias-circle" id="biasCircle">
+                                <span id="biasScore">—</span>
+                            </div>
+                            <div>
+                                <h3 id="biasRisk" style="color:#1a237e;">—</h3>
+                                <p id="biasCount" style="color:#888; font-size:0.85rem;"></p>
+                            </div>
+                        </div>
+                        <div id="biasDetected" style="margin-top:1rem;"></div>
+                    </div>
+
+                    <div class="card">
+                        <h2>🔍 Fake Resume Detection</h2>
+                        <p style="color:#888; font-size:0.85rem; margin-bottom:1rem;">Checks for red flags and suspicious patterns in your resume</p>
+                        <div class="bias-score-row">
+                            <div class="fake-circle" id="fakeCircle">
+                                <span id="fakeScore">—</span>
+                            </div>
+                            <div>
+                                <h3 id="fakeVerdict" style="color:#1a237e;">—</h3>
+                                <p id="fakeTotalIssues" style="color:#888; font-size:0.85rem;"></p>
+                            </div>
+                        </div>
+                        <div id="fakeRedFlags" style="margin-top:1rem;"></div>
+                        <div id="fakeWarnings" style="margin-top:0.5rem;"></div>
+                    </div>
+
+                    <div class="card">
+                        <h2>🤖 ATS Compatibility Check</h2>
+                        <div class="ats-score-row">
+                            <div class="ats-score-circle" id="atsScoreCircle">
+                                <span id="atsScoreValue">—</span>
+                            </div>
+                            <div class="ats-score-info">
+                                <h3 id="atsRating">—</h3>
+                                <p id="atsWordCount" style="color:#888; font-size:0.85rem;"></p>
+                            </div>
+                        </div>
+                        <div style="margin-top:1rem;">
+                            <p><strong style="color:#2e7d32;">✅ Passed Checks:</strong></p>
+                            <ul id="atsPassed" style="color:#2e7d32;"></ul>
+                            <p style="margin-top:0.8rem;"><strong style="color:#c62828;">⚠️ Issues Found:</strong></p>
+                            <ul id="atsIssues" style="color:#c62828;"></ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>💡 Resume Improvement Tips</h2>
+                        <ul id="improvementTips"></ul>
+                    </div>
+
+                    <div class="card">
+                        <h2>🎤 AI-Generated Interview Questions</h2>
+                        <ol id="interviewQuestions"></ol>
+                    </div>
+
+                    <div class="card" style="text-align:center;">
+                        <h2>📥 Download Report</h2>
+                        <p style="color:#666; margin-bottom:1rem;">Download complete analysis as a PDF report</p>
+                        <button class="btn-primary" onclick="downloadReport()" style="width:auto; padding:0.8rem 2rem;">
+                            📥 Download PDF Report
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- JD ONLY MODE -->
+            <div id="jdMode" class="hidden">
+                <div class="card">
+                    <h2>Paste Job Description</h2>
+                    <form id="jdOnlyForm">
+                        <label>Job Description</label>
+                        <textarea id="jdOnlyText" rows="10" placeholder="Paste the complete job description here..." required></textarea>
+                        <button type="submit" class="btn-primary">🔍 Analyze Job Description</button>
+                    </form>
+                </div>
+                <div id="loadingJD" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Analyzing job description...</p>
+                </div>
+                <div id="resultsJD" class="hidden">
+                    <div class="results-grid">
+                        <div class="card">
+                            <h2>📊 Job Overview</h2>
+                            <div class="summary-item">
+                                <span class="summary-label">Experience Level</span>
+                                <span id="jdLevel">—</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Competition</span>
+                                <span id="jdCompetition">—</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Total Skills Required</span>
+                                <span id="jdTotalSkills">—</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Education</span>
+                                <span id="jdEducation">—</span>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h2>🎯 Required Skills</h2>
+                            <div id="jdSkills" class="tag-list"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2>👤 Ideal Candidate Profile</h2>
+                        <ul id="jdIdealProfile"></ul>
+                    </div>
+                    <div class="card">
+                        <h2>🎤 Interview Questions for This Role</h2>
+                        <ol id="jdInterviewQuestions"></ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RANK PAGE -->
+        <div id="page-rank" class="page">
+            <div class="page-header">
+                <h1>🏆 Rank Multiple Resumes</h1>
+                <p>Find the best candidate for your job opening</p>
+            </div>
+            <div class="card">
+                <h2>Upload Resumes</h2>
+                <form id="rankForm">
+                    <label>Upload Multiple Resumes (PDF)</label>
+                    <input type="file" id="resumeFiles" accept=".pdf" multiple required>
+                    <label>Job Description</label>
+                    <textarea id="jobDescriptionMulti" rows="7" placeholder="Paste the job description here..." required></textarea>
+                    <button type="submit" class="btn-primary">📊 Rank Resumes</button>
+                </form>
+            </div>
+            <div id="loadingMulti" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Ranking resumes...</p>
+            </div>
+            <div id="resultsMulti" class="hidden">
+                <div class="card">
+                    <h2>🏆 Ranked Candidates</h2>
+                    <table id="rankTable">
+                        <thead>
+                            <tr><th>Rank</th><th>Resume</th><th>Match Score</th><th>Rating</th></tr>
+                        </thead>
+                        <tbody id="rankTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VOICE INTERVIEW PAGE -->
+        <div id="page-voice" class="page">
+            <div class="page-header">
+                <h1>🎤 Voice Mock Interview</h1>
+                <p>Practice your interview with AI-generated questions</p>
+            </div>
+            <div class="card">
+                <h2>Setup Your Interview</h2>
+                <label>Paste Job Description (optional)</label>
+                <textarea id="voiceJD" rows="4" placeholder="Paste JD for role-specific questions..."></textarea>
+                <label>Your Key Skills (comma separated)</label>
+                <input type="text" id="voiceSkills" placeholder="e.g. Python, Machine Learning, Flask...">
+                <button class="btn-primary" onclick="startVoiceInterview()">🎤 Start Mock Interview</button>
+            </div>
+            <div id="voiceSection" class="hidden">
+                <div class="card voice-card">
+                    <div class="question-counter">
+                        Question <span id="qNum">1</span> of <span id="qTotal">8</span>
+                    </div>
+                    <div class="voice-question" id="voiceQuestion">
+                        Click "Read Question" to hear the question
+                    </div>
+                    <div class="voice-controls">
+                        <button class="btn-voice" onclick="readQuestion()">🔊 Read Question</button>
+                        <button class="btn-voice btn-record" id="recordBtn" onclick="toggleRecording()">🎙️ Record Answer</button>
+                        <button class="btn-voice" onclick="nextQuestion()">⏭️ Next Question</button>
+                    </div>
+                    <div id="transcript" class="transcript-box hidden">
+                        <strong>Your Answer:</strong>
+                        <p id="transcriptText"></p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>All Questions</h2>
+                    <ol id="voiceQuestionsList"></ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTORY PAGE -->
+        <div id="page-history" class="page">
+            <div class="page-header">
+                <h1>📋 Analysis History</h1>
+                <p>Your recent resume analyses (saved in this session)</p>
+            </div>
+            <div id="historyEmpty" class="card">
+                <p style="text-align:center; color:#888; padding:2rem;">No analyses yet. Go to Analyze Resume to get started!</p>
+            </div>
+            <div id="historyList"></div>
+        </div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

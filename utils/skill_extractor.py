@@ -1,7 +1,4 @@
 import re
-import spacy
-
-nlp = spacy.load("en_core_web_sm")
 
 COMMON_SKILLS = [
     "python", "java", "javascript", "c++", "c#", "sql", "html", "css",
@@ -28,7 +25,6 @@ EDUCATION_KEYWORDS = [
 
 
 def extract_skills(text):
-    """Finds known skills mentioned in the resume text."""
     text_lower = text.lower()
     found_skills = []
     for skill in COMMON_SKILLS:
@@ -39,7 +35,6 @@ def extract_skills(text):
 
 
 def extract_education(text):
-    """Detects education-related keywords in the resume."""
     text_lower = text.lower()
     found = []
     for keyword in EDUCATION_KEYWORDS:
@@ -49,7 +44,6 @@ def extract_education(text):
 
 
 def extract_experience_years(text):
-    """Tries to find mentions of years of experience."""
     patterns = [
         r'(\d+)\+?\s*years?\s*(of)?\s*experience',
         r'experience\s*(of|:)?\s*(\d+)\+?\s*years?'
@@ -64,19 +58,19 @@ def extract_experience_years(text):
 
 
 def extract_entities(text):
-    """Uses spaCy NER to find names, organizations, and locations."""
-    doc = nlp(text[:100000])  # limit size for performance
-    entities = {"PERSON": [], "ORG": [], "GPE": []}
-    for ent in doc.ents:
-        if ent.label_ in entities:
-            entities[ent.label_].append(ent.text)
-    for key in entities:
-        entities[key] = list(dict.fromkeys(entities[key]))[:5]
-    return entities
+    """Lightweight name detection using regex (no spaCy needed)."""
+    lines = text.strip().split('\n')
+    first_line = lines[0].strip() if lines else ""
+    persons = []
+    if first_line and len(first_line.split()) <= 4 and first_line.replace(' ', '').isalpha():
+        persons = [first_line]
+
+    orgs = re.findall(r'\b[A-Z][a-zA-Z]*\s+(?:Inc|Ltd|LLC|Corp|Technologies|Solutions|Systems)\b', text)
+
+    return {"PERSON": persons, "ORG": orgs[:5], "GPE": []}
 
 
 def analyze_resume(text):
-    """Runs full analysis on resume text and returns a summary dict."""
     return {
         "skills": extract_skills(text),
         "education": extract_education(text),
